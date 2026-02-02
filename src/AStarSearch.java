@@ -1,4 +1,5 @@
 import java.util.Comparator;
+import java.util.HashSet;
 import java.util.List;
 import java.util.PriorityQueue;
 
@@ -15,6 +16,57 @@ public class AStarSearch implements SearchAlgorithm {
 		this.heuristics = h;
 	}
 
+	//Task 4 Implementation
+
+	// @Override
+	// public void doSearch(Environment env) {
+	// 	heuristics.init(env);
+	// 	nbNodeExpansions = 0;
+	// 	maxFrontierSize = 0;
+	// 	goalNode = null;
+
+	// 	PriorityQueue<Node> frontier = new PriorityQueue<>();
+    //     State startState = env.getCurrentState();
+        
+    //     // Diagnostic: Check if the environment actually sees legal moves at the start
+    //     System.out.println("DEBUG: Root legal moves: " + env.legalMoves(startState));
+
+    //     Node root = new Node(startState, heuristics.eval(startState));
+    //     frontier.add(root);
+
+    //     while (!frontier.isEmpty()) {
+    //         maxFrontierSize = Math.max(maxFrontierSize, frontier.size());
+    //         Node currNode = frontier.poll();
+    //         nbNodeExpansions++;
+
+    //         if (nbNodeExpansions % 1000 == 0) {
+    //             System.out.println("Expansions: " + nbNodeExpansions + " | Frontier: " + frontier.size());
+    //         }
+
+    //         if (env.isGoalState(currNode.state)) {
+    //             this.goalNode = currNode;
+    //             return;
+    //         }
+
+    //         // g(n) = f(n) - h(n)
+    //         int currGN = currNode.evaluation - heuristics.eval(currNode.state);
+
+    //         for (Action action : env.legalMoves(currNode.state)) {
+    //             State nextState = env.getNextState(currNode.state, action);
+    //             int actionCost = env.getCost(currNode.state, action);
+                
+    //             int nextGN = currGN + actionCost;
+    //             int nextFN = nextGN + heuristics.eval(nextState);
+
+    //             Node child = new Node(currNode, nextState, action, nextFN);
+    //             frontier.add(child);
+    //         }
+    //     }
+	// }
+
+
+	// Task 6 Implementation
+	
 	@Override
 	public void doSearch(Environment env) {
 		heuristics.init(env);
@@ -23,42 +75,48 @@ public class AStarSearch implements SearchAlgorithm {
 		goalNode = null;
 
 		PriorityQueue<Node> frontier = new PriorityQueue<>();
-        State startState = env.getCurrentState();
-        
-        // Diagnostic: Check if the environment actually sees legal moves at the start
-        System.out.println("DEBUG: Root legal moves: " + env.legalMoves(startState));
+		
+		HashSet<State> closedList = new HashSet<>();
 
-        Node root = new Node(startState, heuristics.eval(startState));
-        frontier.add(root);
+		State startState = env.getCurrentState();
+		Node root = new Node(startState, heuristics.eval(startState));
+		frontier.add(root);
 
-        while (!frontier.isEmpty()) {
-            maxFrontierSize = Math.max(maxFrontierSize, frontier.size());
-            Node currNode = frontier.poll();
-            nbNodeExpansions++;
+		while (!frontier.isEmpty()) {
+			maxFrontierSize = Math.max(maxFrontierSize, frontier.size());
+			Node currNode = frontier.poll();
 
-            if (nbNodeExpansions % 1000 == 0) {
-                System.out.println("Expansions: " + nbNodeExpansions + " | Frontier: " + frontier.size());
-            }
+			if (closedList.contains(currNode.state)) {
+				continue;
+			}
+			closedList.add(currNode.state);
 
-            if (env.isGoalState(currNode.state)) {
-                this.goalNode = currNode;
-                return;
-            }
+			nbNodeExpansions++;
 
-            // g(n) = f(n) - h(n)
-            int currGN = currNode.evaluation - heuristics.eval(currNode.state);
+			if (nbNodeExpansions % 1000 == 0) {
+				System.out.println("Expansions: " + nbNodeExpansions + " | Closed List: " + closedList.size());
+			}
 
-            for (Action action : env.legalMoves(currNode.state)) {
-                State nextState = env.getNextState(currNode.state, action);
-                int actionCost = env.getCost(currNode.state, action);
-                
-                int nextGN = currGN + actionCost;
-                int nextFN = nextGN + heuristics.eval(nextState);
+			if (env.isGoalState(currNode.state)) {
+				this.goalNode = currNode;
+				return;
+			}
 
-                Node child = new Node(currNode, nextState, action, nextFN);
-                frontier.add(child);
-            }
-        }
+			int currGN = currNode.evaluation - heuristics.eval(currNode.state);
+
+			for (Action action : env.legalMoves(currNode.state)) {
+				State nextState = env.getNextState(currNode.state, action);
+				
+				if (!closedList.contains(nextState)) {
+					int actionCost = env.getCost(currNode.state, action);
+					int nextGN = currGN + actionCost;
+					int nextFN = nextGN + heuristics.eval(nextState);
+
+					Node child = new Node(currNode, nextState, action, nextFN);
+					frontier.add(child);
+				}
+			}
+		}
 	}
 
 	@Override
