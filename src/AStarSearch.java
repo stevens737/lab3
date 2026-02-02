@@ -23,41 +23,42 @@ public class AStarSearch implements SearchAlgorithm {
 		goalNode = null;
 
 		PriorityQueue<Node> frontier = new PriorityQueue<>();
-		State startEnv = env.getCurrentState();
-		Node root = new Node(startEnv, heuristics.eval(startEnv));
-		frontier.add(root);
+        State startState = env.getCurrentState();
+        
+        // Diagnostic: Check if the environment actually sees legal moves at the start
+        System.out.println("DEBUG: Root legal moves: " + env.legalMoves(startState));
 
-		while (!frontier.isEmpty()) {
-			if (frontier.size() > maxFrontierSize) {
-				maxFrontierSize = frontier.size();
-			}
+        Node root = new Node(startState, heuristics.eval(startState));
+        frontier.add(root);
 
-			Node currNode = frontier.poll();
-			nbNodeExpansions++;
+        while (!frontier.isEmpty()) {
+            maxFrontierSize = Math.max(maxFrontierSize, frontier.size());
+            Node currNode = frontier.poll();
+            nbNodeExpansions++;
 
-			if (nbNodeExpansions % 1000 == 0) {
+            if (nbNodeExpansions % 1000 == 0) {
                 System.out.println("Expansions: " + nbNodeExpansions + " | Frontier: " + frontier.size());
             }
 
-			if (env.isGoalState(currNode.state)) {
-				this.goalNode = currNode;
-				return;
-			}
+            if (env.isGoalState(currNode.state)) {
+                this.goalNode = currNode;
+                return;
+            }
 
-			int currGN = currNode.evaluation - heuristics.eval(currNode.state);
+            // g(n) = f(n) - h(n)
+            int currGN = currNode.evaluation - heuristics.eval(currNode.state);
 
-			for (Action action : env.legalMoves(startEnv)) {
-				State nextState = env.getNextState(currNode.state, action);
-				int actionCost = env.getCost(currNode.state, action);
+            for (Action action : env.legalMoves(currNode.state)) {
+                State nextState = env.getNextState(currNode.state, action);
+                int actionCost = env.getCost(currNode.state, action);
+                
+                int nextGN = currGN + actionCost;
+                int nextFN = nextGN + heuristics.eval(nextState);
 
-				int nextGN = currGN + actionCost;
-				int nextFN = nextGN + heuristics.eval(nextState);
-
-				Node child = new Node(currNode, nextState, action, nextFN);
-				frontier.add(child);
-			}
-		}
-
+                Node child = new Node(currNode, nextState, action, nextFN);
+                frontier.add(child);
+            }
+        }
 	}
 
 	@Override
