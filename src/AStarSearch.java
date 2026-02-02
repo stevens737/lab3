@@ -1,4 +1,6 @@
+import java.util.Comparator;
 import java.util.List;
+import java.util.PriorityQueue;
 
 public class AStarSearch implements SearchAlgorithm {
 
@@ -20,12 +22,41 @@ public class AStarSearch implements SearchAlgorithm {
 		maxFrontierSize = 0;
 		goalNode = null;
 
-		// TODO implement the search here
-		// Update nbNodeExpansions and maxFrontierSize while doing the search:
-		// - nbNodeExpansions should be incremented by one for each node popped from the frontier
-		// - maxFrontierSize should be the largest size of the frontier observed during the search measured in number of nodes
-		// Once a goal node has been found, set the goalNode variable to it, this should take care of getPlan() and getPlanCost() below,
-		// as long as the node contains the right information.
+		PriorityQueue<Node> frontier = new PriorityQueue<>();
+		State startEnv = env.getCurrentState();
+		Node root = new Node(startEnv, heuristics.eval(startEnv));
+		frontier.add(root);
+
+		while (!frontier.isEmpty()) {
+			if (frontier.size() > maxFrontierSize) {
+				maxFrontierSize = frontier.size();
+			}
+
+			Node currNode = frontier.poll();
+			nbNodeExpansions++;
+
+			if (nbNodeExpansions % 1000 == 0) {
+                System.out.println("Expansions: " + nbNodeExpansions + " | Frontier: " + frontier.size());
+            }
+
+			if (env.isGoalState(currNode.state)) {
+				this.goalNode = currNode;
+				return;
+			}
+
+			int currGN = currNode.evaluation - heuristics.eval(currNode.state);
+
+			for (Action action : env.legalMoves(startEnv)) {
+				State nextState = env.getNextState(currNode.state, action);
+				int actionCost = env.getCost(currNode.state, action);
+
+				int nextGN = currGN + actionCost;
+				int nextFN = nextGN + heuristics.eval(nextState);
+
+				Node child = new Node(currNode, nextState, action, nextFN);
+				frontier.add(child);
+			}
+		}
 
 	}
 
